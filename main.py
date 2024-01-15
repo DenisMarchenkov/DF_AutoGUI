@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 import cv2
 import pytesseract
+import openpyxl
 
 from PIL import Image
 from itertools import product
@@ -54,9 +55,31 @@ def tile_screenshot(filename, dir_in, dir_out, count_row):
     # параметры для базы
     rows = count_row
     row_start_height = 162
+    #row_start_height = 183
     row_height = 21
     row_start_width = 1023
     row_width = 200
+    shift = 1
+
+    for row in range(1, rows + 1):
+        out = os.path.join(dir_out, f'{name}_row_{row}{ext}')
+        box = (row_start_width, row_start_height, row_start_width + row_width, row_start_height + row_height)
+        img.crop(box).save(out)
+        row_start_height += row_height - shift
+
+
+def tile_screenshot_for_podr(filename, dir_in, dir_out, count_row):
+    name, ext = os.path.splitext(filename)
+    img = Image.open(os.path.join(dir_in, filename))
+    # w, h = img.size
+    # print(w, h)
+
+    # параметры для базы
+    rows = count_row
+    row_start_height = 162
+    row_height = 21
+    row_start_width = 567
+    row_width = 300
     shift = 1
 
     for row in range(1, rows + 1):
@@ -123,6 +146,17 @@ def run_move_to_row(file):
     pyautogui.click()
 
 
+def loging_xlsx(file):
+    file_name = Path(file).stem
+    wb = openpyxl.load_workbook("Книга1.xlsx")
+    sh = wb["Лист1"]
+    for row in sh:
+        for cell in row:
+            if cell.value == file_name.split("_")[0]:
+                sh.cell(row=cell.row, column=18).value = "ОК"
+    wb.save("Книга1.xlsx")
+
+
 def run_convert_to_operation_save_with_reserve(file):
     path_file = str(Path(dir_out, file))
     x, y = pyautogui.locateCenterOnScreen(path_file)
@@ -182,25 +216,24 @@ def run_edit_order(file):
     pyautogui.click(button='right')
     time.sleep(1)
     find_png_confidence("steps/edit.png", "left", 0.3)
-    find_png_confidence("steps/number_doc.png", "left", 0.3)
-    pyautogui.move(190, 0, 0.4)
-    # time.sleep(1)
+    find_png_confidence("steps/number_doc.png", "left", 0.1)
+    pyautogui.move(190, 0, 0.2)
     pyautogui.click()
-    time.sleep(1)
+    time.sleep(0.2)
     pyautogui.press('backspace', presses=15)
-    #pyautogui.write('1')
-    pyautogui.write(str(file.name.split('.')[0]))
-    find_png_confidence("steps/number_doc.png", "left", 0.3)
-    pyautogui.move(670, 445, 0.4)
+    pyautogui.write(str(file.name.split('.')[0].split('_')[0]))
+    find_png_confidence("steps/number_doc.png", "left", 0.2)
+    pyautogui.move(670, 445, 0.2)
     pyautogui.click()
     find_png_confidence("steps/save_edit.png", "left", 0.3)
-    pyautogui.move(-10, 50, 0.4)
+    pyautogui.move(-10, 50, 0.2)
     pyautogui.click()
     find_png_confidence("steps/change_complete.png", "left", 0.1)
     #time.sleep(5)
     pyautogui.move(55, 50, 0.2)
     pyautogui.click()
     time.sleep(1)
+
 
 if __name__ == '__main__':
     dir_in = Path(Path.cwd(), 'in')
@@ -209,20 +242,24 @@ if __name__ == '__main__':
     dir_order_complete = Path(dir_order, 'complete')
 
     pyautogui.screenshot('in/screenshot.png')
-    tile_screenshot('screenshot.png', dir_in, dir_out, count_row=30)
+    tile_screenshot('screenshot.png', dir_in, dir_out, count_row=37)
 
+    i = 1
     for file in get_file("out"):
         file_str = str(file)
         name = ocr_png(file_str)
         name = name[:-1].replace('.', '')
         name = name.replace(' ', '_')[:5]
-        os.rename(os.path.join(dir_out, file), os.path.join(dir_order, name + ".png"))
+        old_name = os.path.join(dir_out, file)
+        new_name = os.path.join(dir_order, name + "_" + str(i) + ".png")
+        os.rename(old_name, new_name)
+        i += 1
 
     # создать список из значений первых пяти символов из столбца 'column' книги 'path'
     list_orders_from_excel = [i[:5] for i in get_dataframe(path="Книга1.xlsx", column=8)]
 
     for file in get_file("orders"):
-        order = file.name[:5]
+        order = file.name.split('_')[0]
         if order not in list_orders_from_excel:
             os.remove(file)
 
@@ -233,5 +270,6 @@ if __name__ == '__main__':
         # run_convert_to_operation_save_with_reserve(file)
         # run_register_operation(file)
         run_edit_order(file)
+        loging_xlsx(file)
 
     movement_files(dir_order, dir_order_complete, 'png')
