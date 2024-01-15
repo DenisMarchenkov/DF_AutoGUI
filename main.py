@@ -175,6 +175,33 @@ def run_register_operation(file):
     print(path_file, '----', 'ОК')
 
 
+def run_edit_order(file):
+    path_file = str(Path(dir_out, file))
+    x, y = pyautogui.locateCenterOnScreen(path_file)
+    pyautogui.moveTo(x, y, 0.3)
+    pyautogui.click(button='right')
+    time.sleep(1)
+    find_png_confidence("steps/edit.png", "left", 0.3)
+    find_png_confidence("steps/number_doc.png", "left", 0.3)
+    pyautogui.move(190, 0, 0.4)
+    # time.sleep(1)
+    pyautogui.click()
+    time.sleep(1)
+    pyautogui.press('backspace', presses=15)
+    #pyautogui.write('1')
+    pyautogui.write(str(file.name.split('.')[0]))
+    find_png_confidence("steps/number_doc.png", "left", 0.3)
+    pyautogui.move(670, 445, 0.4)
+    pyautogui.click()
+    find_png_confidence("steps/save_edit.png", "left", 0.3)
+    pyautogui.move(-10, 50, 0.4)
+    pyautogui.click()
+    find_png_confidence("steps/change_complete.png", "left", 0.1)
+    #time.sleep(5)
+    pyautogui.move(55, 50, 0.2)
+    pyautogui.click()
+    time.sleep(1)
+
 if __name__ == '__main__':
     dir_in = Path(Path.cwd(), 'in')
     dir_out = Path(Path.cwd(), 'out')
@@ -182,7 +209,7 @@ if __name__ == '__main__':
     dir_order_complete = Path(dir_order, 'complete')
 
     pyautogui.screenshot('in/screenshot.png')
-    tile_screenshot('screenshot.png', dir_in, dir_out, count_row=11)
+    tile_screenshot('screenshot.png', dir_in, dir_out, count_row=30)
 
     for file in get_file("out"):
         file_str = str(file)
@@ -202,8 +229,9 @@ if __name__ == '__main__':
     files = get_file("orders")
     for file in files:
         # run_operation_based_on_row_save_in_buffer_without_reserve(file)
-        run_move_to_row(file)
+        # run_move_to_row(file)
         # run_convert_to_operation_save_with_reserve(file)
         # run_register_operation(file)
+        run_edit_order(file)
 
     movement_files(dir_order, dir_order_complete, 'png')
