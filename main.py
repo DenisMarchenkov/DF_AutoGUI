@@ -91,12 +91,17 @@ def tile_screenshot_for_podr(filename, dir_in, dir_out, count_row):
 
 def ocr_png(file):
     img = cv2.imread(file)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # cv2.imshow('Result', img)
-    # cv2.waitKey(0)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    retval, img = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY)
+    img = cv2.resize(img, (0, 0), fx=3, fy=3)
+    img = cv2.GaussianBlur(img, (3, 3), 0)
+    img = cv2.medianBlur(img, 3)
+    # cv2.imshow('asd', img)
+    # cv2.waitKey(2)
+    # cv2.destroyAllWindows()
     config = r'--oem 3 --psm 6'
-    name = pytesseract.image_to_string(img, config=config, lang='rus')
-    return name
+    text = pytesseract.image_to_string(img, config=config, lang='rus')
+    return text
 
 
 def movement_files(file_source, file_destination, file_extension):
@@ -266,10 +271,10 @@ if __name__ == '__main__':
     files = get_file("orders")
     for file in files:
         # run_operation_based_on_row_save_in_buffer_without_reserve(file)
-        # run_move_to_row(file)
+        run_move_to_row(file)
         # run_convert_to_operation_save_with_reserve(file)
         # run_register_operation(file)
-        run_edit_order(file)
+        # run_edit_order(file)
         loging_xlsx(file)
 
     movement_files(dir_order, dir_order_complete, 'png')
