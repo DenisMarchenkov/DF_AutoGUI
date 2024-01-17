@@ -11,11 +11,24 @@ from PIL import Image
 pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 
 
+# def find_png(picture, button, sleep):
+#     x, y = pyautogui.locateCenterOnScreen(picture)
+#     pyautogui.moveTo(x, y, 0.2)
+#     pyautogui.click(button=button)
+#     time.sleep(sleep)
+
 def find_png(picture, button, sleep):
-    x, y = pyautogui.locateCenterOnScreen(picture)
-    pyautogui.moveTo(x, y, 0.2)
-    pyautogui.click(button=button)
-    time.sleep(sleep)
+    retry_counter = 0
+    while retry_counter < 5:
+        try:
+            x, y = pyautogui.locateCenterOnScreen(picture)
+            pyautogui.moveTo(x, y, 0.2)
+            pyautogui.click(button=button)
+            print(f'нашел с {retry_counter + 1} попытки изображение {picture}')
+            retry_counter = 10  # to break the loop
+        except:
+            time.sleep(1)  # retry after some time, i.e. 1 sec
+            retry_counter += 1
 
 
 # def find_png_confidence(picture, button, sleep):
@@ -32,7 +45,7 @@ def find_png_confidence(picture, button, sleep):
             if x > 0:
                 pyautogui.moveTo(x, y, 0.2)
                 pyautogui.click(button=button)
-                print('нашел с', retry_counter + 1, 'попытки изображение', picture)
+                print(f'нашел с {retry_counter + 1} попытки изображение {picture}')
                 retry_counter = 10  # to break the loop
         except:
             time.sleep(1)  # retry after some time, i.e. 1 sec
@@ -91,11 +104,18 @@ def tile_screenshot_for_podr(filename, dir_in, dir_out, count_row):
 def ocr_png(file):
     img = cv2.imread(file)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    retval, img = cv2.threshold(img, 160, 255, cv2.THRESH_BINARY)
-    #retval, img = cv2.threshold(img, 215, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     img = cv2.resize(img, (0, 0), fx=5, fy=5)
-    #img = cv2.GaussianBlur(img, (7, 7), 0)
+
+    # # Пороговое значение изображения по методу бинаризации Оцу
+    # img = cv2.GaussianBlur(img, (5, 5), 0)
+    # retval, img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+    # Адаптивное пороговое значение для изображения
     img = cv2.medianBlur(img, 5)
+    img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 17, 2)
+    img = cv2.medianBlur(img, 5)
+    img = cv2.GaussianBlur(img, (3, 3), 0)
+
     # cv2.imshow('asd', img)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
@@ -204,12 +224,12 @@ def run_register_operation(file):
     pyautogui.click()
     find_png_confidence("steps/ring.png", "left", 0.3)
     find_png_confidence("steps/register.png", "left", 0.3)
-    #time.sleep(1) # отключил на время теста
+    # time.sleep(1) # отключил на время теста
     find_png_confidence("steps/register_question.png", "left", 0.3)
     pyautogui.move(0, 35, 0.4)
     pyautogui.click()
     # time.sleep(0.3) # отключил на время теста
-    #find_png_confidence("steps/register_complete.png", "left", 0.3) # не хочет искать эту картинку
+    # find_png_confidence("steps/register_complete.png", "left", 0.3) # не хочет искать эту картинку
     pyautogui.move(195, 5, 0.5)
     pyautogui.click()
     # time.sleep(2) # отключил на время теста
@@ -218,16 +238,13 @@ def run_register_operation(file):
 
 def run_edit_order(file):
     path_file = str(Path(dir_out, file))
-    # x, y = pyautogui.locateCenterOnScreen(path_file)
-    # pyautogui.moveTo(x, y, 0.3)
-    # pyautogui.click(button='right')
     find_png(path_file, "right", 1)
-    #time.sleep(1)
+    # time.sleep(1)
     find_png_confidence("steps/edit.png", "left", 0.3)
     find_png_confidence("steps/number_doc.png", "left", 0.1)
     pyautogui.move(190, 0, 0.2)
     pyautogui.click()
-    #time.sleep(0.2)
+    # time.sleep(0.2)
     pyautogui.press('backspace', presses=15)
     pyautogui.write(str(file.name.split('.')[0].split('_')[0]))
     find_png_confidence("steps/number_doc.png", "left", 0.2)
@@ -237,10 +254,10 @@ def run_edit_order(file):
     pyautogui.move(-10, 50, 0.2)
     pyautogui.click()
     find_png_confidence("steps/change_complete.png", "left", 0.1)
-    #time.sleep(5)
+    # time.sleep(5)
     pyautogui.move(55, 50, 0.2)
     pyautogui.click()
-    #time.sleep(1)
+    # time.sleep(1)
 
 
 if __name__ == '__main__':
@@ -250,16 +267,16 @@ if __name__ == '__main__':
     dir_order_complete = Path(dir_order, 'complete')
 
     pyautogui.screenshot('in/screenshot.png')
-    tile_screenshot('screenshot.png', dir_in, dir_out, count_row=20)
+    tile_screenshot('screenshot.png', dir_in, dir_out, count_row=37)
 
     i = 1
     for file in get_file("out"):
         file_str = str(file)
         name = ocr_png(file_str)
         name = name[:-1].split()[0]
-        #print(name)
-        #name = name.replace('?', '')
-        #name = name[:5]
+        # print(name)
+        # name = name.replace('?', '')
+        # name = name[:5]
         old_name = os.path.join(dir_out, file)
         new_name = os.path.join(dir_order, name + "_" + str(i) + ".png")
         os.rename(old_name, new_name)
@@ -272,14 +289,22 @@ if __name__ == '__main__':
         order = file.name.split('_')[0]
         if order not in list_orders_from_excel:
             os.remove(file)
+        else:
+            # run_operation_based_on_row_save_in_buffer_without_reserve(file)
+            # run_convert_to_operation_save_with_reserve(file)
+            # run_move_to_row(file)
+            # run_register_operation(file)
+            run_move_to_row(file)
+            # run_edit_order(file)
+            loging_xlsx(file)
 
-    files = get_file("orders")
-    for file in files:
-        # run_operation_based_on_row_save_in_buffer_without_reserve(file)
-        # run_move_to_row(file)
-        # run_convert_to_operation_save_with_reserve(file)
-        # run_register_operation(file)
-        run_edit_order(file)
-        loging_xlsx(file)
+    # files = get_file("orders")
+    # for file in files:
+    #     # run_operation_based_on_row_save_in_buffer_without_reserve(file)
+    #     # run_convert_to_operation_save_with_reserve(file)
+    #     # run_move_to_row(file)
+    #     # run_register_operation(file)
+    #
+    #     loging_xlsx(file)
 
     movement_files(dir_order, dir_order_complete, 'png')
