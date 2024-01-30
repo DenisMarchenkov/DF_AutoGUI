@@ -139,9 +139,10 @@ def loging_xlsx(file):
     sh = wb["Лист1"]
     for row in sh:
         for cell in row:
-            if cell.value == file_name.split("_")[0]:
+            if str(file_name.split("_")[0]) == str(cell.value):
                 sh.cell(row=cell.row, column=18).value = "ОК"
-    wb.save("Книга1.xlsx")
+                wb.save("Книга1.xlsx")
+                return True
 
 
 def run_convert_to_operation_save_with_reserve(file):
@@ -191,7 +192,7 @@ def run_register_operation(file):
     pyautogui.click()
     # time.sleep(0.3) # отключил на время теста
     # find_png_confidence("steps/register_complete.png", "left", 0.3) # не хочет искать эту картинку
-    pyautogui.move(195, 5, 0.5)
+    pyautogui.move(195, 5, 0.7)
     pyautogui.click()
     # time.sleep(2) # отключил на время теста
     print(path_file, '----', 'ОК')

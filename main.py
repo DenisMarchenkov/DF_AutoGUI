@@ -25,7 +25,6 @@ if __name__ == '__main__':
         else:
             # run_operation_based_on_row_save_in_buffer_without_reserve(file)
             # run_convert_to_operation_save_with_reserve(file)
-            # run_move_to_row(file)
             # run_register_operation(file)
             run_move_to_row(file)
             # run_edit_order(file)
